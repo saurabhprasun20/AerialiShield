@@ -1,16 +1,13 @@
 #!/usr/bin/python3
 from argparse import ArgumentParser
-from datetime import datetime
 import logging
 import os
-import shutil
 import sys
 from decouple import config
 from aerialist.px4.drone_test import DroneTest, AgentConfig, DroneTestResult
 from aerialist.px4.docker_agent import DockerAgent
 from aerialist.px4.k8s_agent import K8sAgent
 from aerialist.px4.local_agent import LocalAgent
-from aerialist.px4.trajectory import Trajectory
 from log_generator import log_csv, log_threshold_limit
 
 logger = logging.getLogger(__name__)
