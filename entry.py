@@ -104,7 +104,11 @@ def create_log_files(test: DroneTest, results: DroneTestResult):
                     light=test.simulation.light,
                     obstacles=None
                     if test.simulation is None
-                    else test.simulation.obstacles)
+                    else test.simulation.obstacles,
+                    upload_dir=None 
+                    if test.agent is None
+                    else test.agent.path
+                    )
 
 def execute_test(test: DroneTest):
     logger.info("setting up the test environment...")

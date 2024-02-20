@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mission-7
+  labels:
+    {}
+
+spec:
+  volumes:
+    - configMap:
+        defaultMode: 420
+        name: k8s-config
+      name: vol-k8s-conf
+  containers:
+    - imagePullPolicy: Always
+      name: container-0
+      image: prasun20/aerialshield
+      stdin: true
+      stdinOnce: false
+      command:
+        - /bin/bash 
+        - -c 
+        - "$(COMMAND)"
+      tty: true
+      env:
+        - name: COMMAND
+          # value: 'python3 surrealist --help'
+          value: 'python3 entry.py exec --test webdav://test/casestudies/mission4.yaml'
+        - name: WEBDAV_UP_FLD
+          value: 'webdav://test/'
+        - name: WEBDAV_DL_FLD
+          value: 'webdav://test/casestudies/'
+        - name: WEBDAV_HOST
+          valueFrom:
+            secretKeyRef:
+              name: webdav
+              key: host        
+        - name: WEBDAV_ROOT
+          valueFrom:
+            secretKeyRef:
+              name: webdav
+              key: root    
+        - name: WEBDAV_USER
+          valueFrom:
+            secretKeyRef:
+              name: webdav
+              key: user           
+        - name: WEBDAV_PASS
+          valueFrom:
+            secretKeyRef:
+              name: webdav
+              key: pass  
+      volumeMounts:
+        - mountPath: /root/.kube/config
+          name: vol-k8s-conf
+          readOnly: true
+          subPath: k8s-config.yaml        
+      resources:
+        limits:
+          cpu: 1500m
+          memory: 15000Mi
+        requests: {}
+  affinity:
+  imagePullSecrets:
+    - name: dockerhub
+  initContainers:
+  restartPolicy: OnFailure

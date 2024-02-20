@@ -3,6 +3,7 @@ from decouple import config
 from aerialist.px4.trajectory import Trajectory
 from datetime import datetime
 import csv
+from itertools import zip_longest
 import pyulog
 from aerialist.px4.drone_test import DroneTest, DroneTestResult
 from typing import List
@@ -10,6 +11,7 @@ from aerialist.px4.obstacle import Obstacle
 
 
 def log_threshold_limit(results: List[DroneTestResult], upload_dir: str):
+    print("In the log threshold method")
     result_dir = config("RESULTS_DIR", default="results/")
     threshold_file = config("THRESHOLD_FILE", default="threshold")
     file_extension = config("FILE_EXTENSION", default=".csv")
@@ -32,7 +34,10 @@ def log_csv(
         wind: int = 0,
         obstacles: List[Obstacle] = None,
         light: float = 0.4,
+        upload_dir:str = None
         ) -> None:
+    
+    print("In the log_csv method")
     result_dir = config("RESULTS_DIR", default="results/")
     dataset_file_combined = config("DATASET_FILE", default="dataset_file_combined")
     dataset_file_edit_mode = config("DATA_FILE_EDIT_MODE", default="a")
@@ -41,6 +46,7 @@ def log_csv(
     file_extension = config("FILE_EXTENSION", default=".csv")
     default_separation = config("DEFAULT_SEPARATION", default=",")
     file_ts = str(datetime.now().strftime("%Y%m%d%H%M%S"))
+    print(f"@@Timestamp is {file_ts}")
     dataset_file = ""
     # print(f"***LOG:{results[0].log_file}")
     log = pyulog.ULog(results[0].log_file)
@@ -55,17 +61,21 @@ def log_csv(
     unsafe_flag = 0
     # print(f'**keys are {cpu_data.data.keys()}')
     # print(f'cpu load and ram usage length are {len(cpu_load)},{len(ram_usage)}')
+    cpu_file_name = result_dir + cpu_file + "_" + file_ts + file_extension
+    print(f"%%%%%cpu_file_name is {cpu_file_name}")
     for temp_cpu_load, temp_ram_usage, temp_cpu_timestamp in zip_longest(cpu_load, ram_usage, cpu_timestamp):
         cpu_row = [temp_cpu_timestamp, temp_cpu_load, temp_ram_usage]
         cpu_timestamp_list.append(temp_cpu_timestamp)
-        f = open(result_dir + cpu_file + "_" + file_ts + file_extension + str(random.randrange(0,100)),
-                    cpu_file_edit_mode)
+        f = open(cpu_file_name, cpu_file_edit_mode)
         writer = csv.writer(f)
         if not cpu_header:
             writer.writerow(["timestamp", "cpu_usage", "ram_usage"])
             cpu_header = True
         writer.writerow(cpu_row)
         f.close()
+
+    if upload_dir is not None:
+        upload(cpu_file_name, test.agent.path)
 
     trajectories: List[Trajectory] = [r.record for r in results]
     for trajectory in trajectories:

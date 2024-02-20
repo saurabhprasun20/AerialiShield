@@ -6,7 +6,7 @@ WORKDIR /src/aerialshield/
 RUN pip3 install -r /src/aerialshield/requirements.txt
 
 COPY ./ /src/aerialshield//
-RUN mkdir -p ./logs/ ./results/ ./generated_tests/
+RUN mkdir -p ./logs/ ./results/ ./generated_tests/ ./tmp
 
 ENV AGENT local
 ENV AVOIDANCE_LAUNCH /src/aerialist/aerialist/resources/simulation/local_planner_stereo.launch
