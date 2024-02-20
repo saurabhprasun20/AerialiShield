@@ -19,7 +19,31 @@ def arg_parse():
     )
     subparsers = main_parser.add_subparsers()
     parser = subparsers.add_parser(name="exec", description="generate tests")
-    parser.add_argument("--test", help="test description yaml file")
+    parser.add_argument("--test", default=None, help="test description yaml file")
+
+
+    parser.add_argument(
+        "--agent",
+        default=config("AGENT", default="local"),
+        choices=["local", "docker", "k8s"],
+        help="where to run the tests",
+    )
+    parser.add_argument(
+        "-n",
+        default=1,
+        type=int,
+        help="no. of parallel runs (in k8s)",
+    )
+    parser.add_argument(
+        "--path",
+        default=None,
+        help="cloud output path to copy logs (in k8s)",
+    )
+    parser.add_argument(
+        "--id",
+        default=None,
+        help="k8s job id",
+    )
 
     parser.set_defaults(func=run_experiment)
     args = main_parser.parse_args()

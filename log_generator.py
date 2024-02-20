@@ -3,6 +3,7 @@ from decouple import config
 from aerialist.px4.trajectory import Trajectory
 from datetime import datetime
 import csv
+import pyulog
 from aerialist.px4.drone_test import DroneTest, DroneTestResult
 from typing import List
 from aerialist.px4.obstacle import Obstacle
