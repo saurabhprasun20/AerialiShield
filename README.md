@@ -105,4 +105,4 @@ Apartment and Trees are of fixed size. So your entered value for size of tress a
 
 ## License
 
-The software we developed is distributed under MIT license. See the [license](./LICENSE.md) file.
+The software we developed is distributed under MIT license.
