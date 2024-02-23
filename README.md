@@ -31,7 +31,7 @@ AerialShield Docker image is hosted on [Dockerhub](https://hub.docker.com/r/pras
 
 1. `docker run -it prasun20/aerialshield bash`
 
-- You can now use the [Command Line Interface](#command-line-interface) in the container's bash.
+- You can now use the [command-line-interface in the container's bash.
 - check `python3 entry.py exec --help`
 
 
@@ -44,7 +44,7 @@ AerialShield can also deploy test executions on a Kubernetes cluster to facilita
 
 ### Test Description File
 
-Using a predefined [test-description yaml file](samples/tests/template-test.yaml) is the easiest way to define the test case.
+You can define the test as below:
 
 ```yaml
 # template-test.yaml
