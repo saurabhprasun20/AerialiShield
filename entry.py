@@ -8,7 +8,11 @@ from aerialist.px4.drone_test import DroneTest, AgentConfig, DroneTestResult
 from aerialist.px4.docker_agent import DockerAgent
 from aerialist.px4.k8s_agent import K8sAgent
 from aerialist.px4.local_agent import LocalAgent
+from aerialist.entry import execute_test
 from log_generator import log_csv, log_threshold_limit
+
+config("MAKEING_SURE_TO_INIT_CONFIG_BEFORE_LOADING_AERIALIST", default=True)
+
 
 logger = logging.getLogger(__name__)
 
@@ -110,20 +114,20 @@ def create_log_files(test: DroneTest, results: DroneTestResult):
                     else test.agent.path
                     )
 
-def execute_test(test: DroneTest):
-    logger.info("setting up the test environment...")
-    if test.agent.engine == AgentConfig.LOCAL:
-        agent = LocalAgent(test)
-    if test.agent.engine == AgentConfig.DOCKER:
-        agent = DockerAgent(test)
-    if test.agent.engine == AgentConfig.K8S:
-        agent = K8sAgent(test)
+# def execute_test(test: DroneTest):
+#     logger.info("setting up the test environment...")
+#     if test.agent.engine == AgentConfig.LOCAL:
+#         agent = LocalAgent(test)
+#     if test.agent.engine == AgentConfig.DOCKER:
+#         agent = DockerAgent(test)
+#     if test.agent.engine == AgentConfig.K8S:
+#         agent = K8sAgent(test)
 
-    logger.info("running the test...")
-    test_results = agent.run()
+#     logger.info("running the test...")
+#     test_results = agent.run()
 
-    logger.info("test finished...")
-    return test_results
+#     logger.info("test finished...")
+#     return test_results
 
 def main():
     try:
