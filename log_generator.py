@@ -10,7 +10,6 @@ from typing import List
 from aerialist.px4.obstacle import Obstacle
 import numpy as np
 
-
 average_distance_tree = []
 average_distance_box = []
 avergae_distance_apartment = []
@@ -46,8 +45,8 @@ def log_csv(
         wind: int = 0,
         obstacles: List[Obstacle] = None,
         light: float = 0.4,
-        upload_dir:str = None
-        ) -> None:
+        upload_dir: str = None
+) -> None:
     print("In the log_csv method")
     global average_distance_box, average_distance_tree, avergae_distance_apartment, min_distance_apartment, min_distance_box, min_distance_tree, max_distance_apartment, max_distance_box, max_distance_tree
     result_dir = config("RESULTS_DIR", default="results/")
@@ -70,8 +69,8 @@ def log_csv(
     cpu_timestamp = cpu_data.data['timestamp']
     unsafe_flag = 0
 
-
-    generate_cpu_usage(test=test,cpu_load=cpu_load,ram_usage=ram_usage,cpu_timestamp=cpu_timestamp,file_ts=file_ts,upload_dir=upload_dir)
+    generate_cpu_usage(test=test, cpu_load=cpu_load, ram_usage=ram_usage, cpu_timestamp=cpu_timestamp, file_ts=file_ts,
+                       upload_dir=upload_dir)
     # cpu_timestamp_list = []
     # cpu_header = False
     # # print(f'**keys are {cpu_data.data.keys()}')
@@ -162,7 +161,7 @@ def log_csv(
         i = 0
 
         csv_header = ["x", "y", "z", "r", "timestamp", "wind", "light",
-                        "obstacle_present"]
+                      "obstacle_present"]
         csv_header_obstacles = ["no_of_obst", "no_of_boxes", "no_of_trees", "no_of_apt", "avg_dist_boxes",
                                 "avg_dist_trees", "avg_dist_apt"]
         csv_header_obst_end = ["obst_details", "unsafe"]
@@ -205,10 +204,10 @@ def log_csv(
                 if not header_flag:
                     header_final = csv_header + csv_header_obstacles + obstacle_header_distance + csv_header_obst_end
                 row = [x, y, z, r, timestamp, wind, light, obstacles_present, number_of_obstacles, number_of_trees,
-                        number_of_boxes,
-                        number_of_apartments, average_box_distance, average_tree_distance,
-                        average_apt_distance] + tree_min_distance + box_min_distance + apt_min_distance + [
-                            obstacle_list] + [unsafe_flag]
+                       number_of_boxes,
+                       number_of_apartments, average_box_distance, average_tree_distance,
+                       average_apt_distance] + tree_min_distance + box_min_distance + apt_min_distance + [
+                          obstacle_list] + [unsafe_flag]
             else:
                 if not header_flag:
                     header_final = csv_header
@@ -224,16 +223,15 @@ def log_csv(
     if upload_dir is not None:
         upload(dataset_file, test.agent.path)
 
-    generate_complexity_matrix(obstacles=obstacles, upload_dir=upload_dir,file_ts=file_ts,path=test.agent.path)
-
+    generate_complexity_matrix(obstacles=obstacles, upload_dir=upload_dir, file_ts=file_ts, path=test.agent.path)
 
 
 def generate_cpu_usage(test: DroneTest,
-                       cpu_load, 
-                       ram_usage, 
+                       cpu_load,
+                       ram_usage,
                        cpu_timestamp,
                        file_ts,
-                       upload_dir)->None:
+                       upload_dir) -> None:
     result_dir = config("RESULTS_DIR", default="results/")
     cpu_file = config("CPU_FILE", default="cpu_file")
     cpu_file_edit_mode = config("CPU_FILE_EDIT_MODE", default="a")
@@ -255,18 +253,17 @@ def generate_cpu_usage(test: DroneTest,
             cpu_header = True
         writer.writerow(cpu_row)
         f.close()
-    
 
     if upload_dir is not None:
         upload(cpu_file_name, test.agent.path)
 
 
 def generate_complexity_matrix(
-    obstacles: List[Obstacle] = None,
-    upload_dir:str = None,
-    file_ts:str = None,
-    path:str = None
-    ) -> None:
+        obstacles: List[Obstacle] = None,
+        upload_dir: str = None,
+        file_ts: str = None,
+        path: str = None
+) -> None:
     min_max_apartment_list = []
     min_max_tree_list = []
     min_max_box_list = []
@@ -274,7 +271,7 @@ def generate_complexity_matrix(
     complexity_file = config("COMPLEXITY_FILE", default="complexity_file")
     complexity_file_edit_mode = config("COMPLEXITY_FILE_EDIT_MODE", default="a")
     file_extension = config("FILE_EXTENSION", default=".csv")
-    if len(obstacles)==0:
+    if len(obstacles) == 0:
         return
     number_of_obstacles = len(obstacles)
     volume_list = []
@@ -294,83 +291,107 @@ def generate_complexity_matrix(
             tree_present = True
         if obstacle.shape == "BOX":
             box_present = True
-    
+
         point_list.append([obst_x, obst_y])
-        volume = obst_l*obst_w*obst_h
+        volume = obst_l * obst_w * obst_h
         volume_list.append(volume)
-        
-    
-    average_volume = sum(volume_list)/len(volume_list)
-    min_max_volume_list = min_max_weighted_sum(volume_list,min(volume_list),max(volume_list))
-    distances,average_distance_bw_obs,distance_list = find_average_np(point_list=point_list)
-    min_dist_obs, max_dist_obs = find_min_max(distances)
+
+    average_volume = sum(volume_list) / len(volume_list)
+    min_max_volume_list = min_max_weighted_sum(volume_list, min(volume_list), max(volume_list))
+    euclidean_distance_list, average_distance_bw_obs = calculate_euclidean_distances(point_list)
+    min_dist_obs, max_dist_obs = find_min_max(euclidean_distance_list)
     print(f'min_dis_obs{min_dist_obs} and max_dist_obs {max_dist_obs}')
-    print(f'distance_list {distance_list}')
-    print(f'distance_list {distance_list.shape} and len is {len(distance_list)}')
-    min_max_distance_list = min_max_weighted_sum(distance_list, min_dist_obs, max_dist_obs)
+    print(f'distance_list {euclidean_distance_list}')
+    min_max_distance_list = min_max_weighted_sum(euclidean_distance_list, min_dist_obs, max_dist_obs)
     if apartment_present:
-        min_max_apartment_list = min_max_weighted_sum(avergae_distance_apartment, min_distance_apartment[0],max_distance_apartment[0])
+        min_max_apartment_list = min_max_weighted_sum(avergae_distance_apartment, min_distance_apartment[0],
+                                                      max_distance_apartment[0])
     if tree_present:
         min_max_tree_list = min_max_weighted_sum(average_distance_tree, min_distance_tree[0], max_distance_tree[0])
     if box_present:
         print("Pront")
         print(min_distance_box[0])
         print(max_distance_box[0])
-        min_max_box_list = min_max_weighted_sum(average_distance_box,min_distance_box[0],max_distance_box[0])
+        min_max_box_list = min_max_weighted_sum(average_distance_box, min_distance_box[0], max_distance_box[0])
     header = False
     complexity_file_name = result_dir + complexity_file + "_" + file_ts + file_extension
 
-    for temp_volume_list, temp_distance_list, temp_apt_list, temp_tree_list, temp_box_list in zip_longest(min_max_volume_list, min_max_distance_list, min_max_apartment_list, 
-                                                                                                          min_max_tree_list, min_max_box_list):
-        row_to_write = [number_of_obstacles, average_volume, average_distance_bw_obs, temp_volume_list, temp_distance_list, temp_apt_list, temp_tree_list, temp_box_list]
+    for temp_volume_list, temp_distance_list, temp_apt_list, temp_tree_list, temp_box_list in zip_longest(
+            min_max_volume_list, min_max_distance_list, min_max_apartment_list,
+            min_max_tree_list, min_max_box_list):
+        row_to_write = [number_of_obstacles, volume_list, average_volume, euclidean_distance_list,
+                        average_distance_bw_obs, temp_volume_list, temp_distance_list, temp_apt_list, temp_tree_list,
+                        temp_box_list]
         f = open(complexity_file_name, complexity_file_edit_mode)
         writer = csv.writer(f)
         if not header:
-            writer.writerow(["No._of_Obst","average_volume","euclidean_dist_avg","min_max_volume","min_max_euclidean_dist","min_max_apt_dist","min_max_tree_dist","min_max_box_dist"])
+            writer.writerow(
+                ["No._of_Obst", "volume_elements", "average_volume", "distance_obstacles", "euclidean_dist_avg",
+                 "min_max_volume", "min_max_euclidean_dist", "min_max_apt_dist", "min_max_tree_dist",
+                 "min_max_box_dist"])
             header = True
         writer.writerow(row_to_write)
         f.close()
-    
+
     if upload_dir is not None:
         upload(complexity_file_name, path)
 
-       
 
 def min_max_weighted_sum(elemnts_list, min_val, max_val):
     print(f'elements_list is {elemnts_list}')
-    print(f'min_val is {min_val} abd nax_val is:{max_val}')
+    print(f'min_val is {min_val} and nax_val is:{max_val}')
     min_max_weighted_list = []
     for element in elemnts_list:
         if min_val == max_val:
-            min_max_weighted_list.append((element-min_val))
+            min_max_weighted_list.append((element - min_val))
         else:
-            min_max_weighted_list.append((element-min_val)/(max_val-min_val))
+            min_max_weighted_list.append((element - min_val) / (max_val - min_val))
     return min_max_weighted_list
 
 
-def find_average_np(point_list):
-    points = np.array(point_list)
-    diff = points[:, np.newaxis, :] - points[np.newaxis, :, :]
-    distances = np.sqrt(np.sum(diff**2, axis=-1))
-    total_distance_sum = np.sum(distances)
-    average_distance_obs = total_distance_sum/(distances.shape[0]*distances.shape[1]-distances.shape[0])
+def calculate_euclidean_distances(points):
+    num_points = len(points)
+    distances = np.zeros((num_points, num_points))
 
-    mask = np.ones(distances.shape, dtype=bool)
-    np.fill_diagonal(mask, False)
-    non_diagonal_elements = distances[mask]
-    print(non_diagonal_elements.shape)
-    print(len(non_diagonal_elements))
+    for i in range(num_points):
+        for j in range(i + 1, num_points):
+            # Calculate the Euclidean distance and store it in the matrix
+            distances[i, j] = np.linalg.norm(np.array(points[i]) - np.array(points[j]))
+            distances[j, i] = distances[i, j]  # Mirror the distance for the symmetric matrix
 
-    return distances, average_distance_obs, non_diagonal_elements
+            euclidean_distances = distances[np.tril_indices(num_points, -1)]
+            # distance = np.sum(euclidean_distances)
+            average_distance = np.mean(euclidean_distances)
+
+    return euclidean_distances, average_distance
 
 
-def find_min_max(np_array):
-    np.fill_diagonal(np_array, np.inf)
-    min_distance = np.min(np_array)
-    print("Minimum distance (excluding diagonal):", min_distance)
-    np.fill_diagonal(np_array, 0)
-    max_distance = np.max(np_array)
-    print("Maximum distance:", max_distance)
-    return min_distance,max_distance
+# def find_average_np(point_list):
+#     points = np.array(point_list)
+#     diff = points[:, np.newaxis, :] - points[np.newaxis, :, :]
+#     distances = np.sqrt(np.sum(diff ** 2, axis=-1))
+#     total_distance_sum = np.sum(distances)
+#     average_distance_obs = total_distance_sum / (distances.shape[0] * distances.shape[1] - distances.shape[0])
+#
+#     mask = np.ones(distances.shape, dtype=bool)
+#     np.fill_diagonal(mask, False)
+#     non_diagonal_elements = distances[mask]
+#     print(non_diagonal_elements.shape)
+#     print(len(non_diagonal_elements))
+#
+#     return distances, average_distance_obs, non_diagonal_elements
 
-    obstacles
+
+def find_min_max(temp_list):
+    min_val = min(temp_list)
+    max_val = max(temp_list)
+    return min_val, max_val
+
+# def find_min_max(np_array):
+#     np.fill_diagonal(np_array, np.inf)
+#     min_distance = np.min(np_array)
+#     print("Minimum distance (excluding diagonal):", min_distance)
+#     np.fill_diagonal(np_array, 0)
+#     max_distance = np.max(np_array)
+#     print("Maximum distance:", max_distance)
+#     return min_distance,max_distance

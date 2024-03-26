@@ -4,6 +4,9 @@ import logging
 import os
 import sys
 from decouple import config
+
+config("MAKEING_SURE_TO_INIT_CONFIG_BEFORE_LOADING_AERIALIST", default=True)
+
 from aerialist.px4.drone_test import DroneTest, AgentConfig, DroneTestResult
 from aerialist.px4.docker_agent import DockerAgent
 from aerialist.px4.k8s_agent import K8sAgent
@@ -11,7 +14,7 @@ from aerialist.px4.local_agent import LocalAgent
 from aerialist.entry import execute_test
 from log_generator import log_csv, log_threshold_limit
 
-config("MAKEING_SURE_TO_INIT_CONFIG_BEFORE_LOADING_AERIALIST", default=True)
+
 
 
 logger = logging.getLogger(__name__)
@@ -23,6 +26,7 @@ def arg_parse():
     )
     subparsers = main_parser.add_subparsers()
     parser = subparsers.add_parser(name="exec", description="generate tests")
+    parser.add_argument("--pre_check", default=None, help="precheck yaml file without obstacles")
     parser.add_argument("--test", default=None, help="test description yaml file")
 
 
@@ -80,8 +84,29 @@ def config_loggers():
     px4.addHandler(f_handler)
     main.addHandler(f_handler)
     entry.addHandler(f_handler)
+    
+def check_complexity(args):
+    if args.test is not None:
+        pre_check = DroneTest.from_yaml(args.test)
+        
+    if args.pre_check is not None:
+        test = DroneTest.from_yaml(args.pre_check)
+        if test.agent is None:
+            test.agent = AgentConfig(
+                engine=args.agent,
+                count=args.n,
+                path=args.path,
+                id=args.id,
+            )
+            
+    test_results = execute_test(test)
+    logger.info(f"LOG:{test_results[0].log_file}")
+    DroneTest.plot(pre_check, test_results)
+    create_log_files(pre_check,test_results)
 
 def run_experiment(args):
+    if args.pre_check is not None:
+        pre_check = DroneTest.from_yaml(args.pre_check)
     if args.test is not None:
         test = DroneTest.from_yaml(args.test)
         if test.agent is None:
@@ -94,8 +119,14 @@ def run_experiment(args):
     
     test_results = execute_test(test)
     logger.info(f"LOG:{test_results[0].log_file}")
-    DroneTest.plot(test, test_results)
-    create_log_files(test,test_results)
+    if args.pre_check is not None:
+        print("About to call plot function")
+        pre_check.agent.path = test.agent.path
+        DroneTest.plot(pre_check, test_results)
+        create_log_files(pre_check,test_results)
+    else:
+        DroneTest.plot(test, test_results)
+        create_log_files(test,test_results)
 
 def create_log_files(test: DroneTest, results: DroneTestResult):
     if results is not None and len(results) >= 1:
@@ -113,21 +144,6 @@ def create_log_files(test: DroneTest, results: DroneTestResult):
                     if test.agent is None
                     else test.agent.path
                     )
-
-# def execute_test(test: DroneTest):
-#     logger.info("setting up the test environment...")
-#     if test.agent.engine == AgentConfig.LOCAL:
-#         agent = LocalAgent(test)
-#     if test.agent.engine == AgentConfig.DOCKER:
-#         agent = DockerAgent(test)
-#     if test.agent.engine == AgentConfig.K8S:
-#         agent = K8sAgent(test)
-
-#     logger.info("running the test...")
-#     test_results = agent.run()
-
-#     logger.info("test finished...")
-#     return test_results
 
 def main():
     try:
