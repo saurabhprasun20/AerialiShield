@@ -297,8 +297,9 @@ def generate_complexity_matrix(
         volume_list.append(volume)
 
     average_volume = sum(volume_list) / len(volume_list)
+    median_volume_val = np.median(volume_list) 
     min_max_volume_list = min_max_weighted_sum(volume_list, min(volume_list), max(volume_list))
-    euclidean_distance_list, average_distance_bw_obs = calculate_euclidean_distances(point_list)
+    euclidean_distance_list, average_distance_bw_obs, euclidean_median_value = calculate_euclidean_distances(point_list)
     min_dist_obs, max_dist_obs = find_min_max(euclidean_distance_list)
     print(f'min_dis_obs{min_dist_obs} and max_dist_obs {max_dist_obs}')
     print(f'distance_list {euclidean_distance_list}')
@@ -319,14 +320,14 @@ def generate_complexity_matrix(
     for temp_volume_list, temp_distance_list, temp_apt_list, temp_tree_list, temp_box_list in zip_longest(
             min_max_volume_list, min_max_distance_list, min_max_apartment_list,
             min_max_tree_list, min_max_box_list):
-        row_to_write = [number_of_obstacles, volume_list, average_volume, euclidean_distance_list,
-                        average_distance_bw_obs, temp_volume_list, temp_distance_list, temp_apt_list, temp_tree_list,
+        row_to_write = [number_of_obstacles, volume_list, average_volume, median_volume_val, euclidean_distance_list,
+                        average_distance_bw_obs, euclidean_median_value, temp_volume_list, temp_distance_list, temp_apt_list, temp_tree_list,
                         temp_box_list]
         f = open(complexity_file_name, complexity_file_edit_mode)
         writer = csv.writer(f)
         if not header:
             writer.writerow(
-                ["No._of_Obst", "volume_elements", "average_volume", "distance_obstacles", "euclidean_dist_avg",
+                ["No._of_Obst", "volume_elements", "average_volume", "median_val", "distance_obstacles", "euclidean_dist_avg", "euclidean_median_val",
                  "min_max_volume", "min_max_euclidean_dist", "min_max_apt_dist", "min_max_tree_dist",
                  "min_max_box_dist"])
             header = True
@@ -362,8 +363,9 @@ def calculate_euclidean_distances(points):
             euclidean_distances = distances[np.tril_indices(num_points, -1)]
             # distance = np.sum(euclidean_distances)
             average_distance = np.mean(euclidean_distances)
+            median_value = np.median(euclidean_distances)
 
-    return euclidean_distances, average_distance
+    return euclidean_distances, average_distance, median_value
 
 
 # def find_average_np(point_list):
